@@ -1,0 +1,1097 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskPilot - Guided Task Planning Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --surface-soft: #f8fbff;
+      --text: #111827;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-strong: #1d4ed8;
+      --line: #d9e2ef;
+      --ok: #15803d;
+      --warn: #dc2626;
+      --radius-md: 12px;
+      --radius-sm: 10px;
+      --space-1: 8px;
+      --space-2: 12px;
+      --space-3: 16px;
+      --space-4: 20px;
+      --space-5: 28px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+      /* All Tasks table: shared column template (keeps header/rows aligned, narrower than 120px cells) */
+      /* Full page width: slightly wider numeric columns for alignment */
+      --mvp-table-cols: minmax(200px, 1fr) repeat(5, 110px);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.55;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 28px 20px 36px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-4);
+      margin-bottom: var(--space-3);
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+      margin-bottom: var(--space-2);
+      letter-spacing: -0.01em;
+    }
+
+    h1 {
+      font-size: 30px;
+      line-height: 1.2;
+    }
+
+    h2 {
+      font-size: 22px;
+      line-height: 1.25;
+    }
+
+    p {
+      margin-top: 0;
+      margin-bottom: var(--space-2);
+    }
+
+    main {
+      display: grid;
+      gap: 24px;
+    }
+
+    nav a, .legal a {
+      margin-right: var(--space-2);
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    nav a:hover, .legal a:hover {
+      text-decoration: underline;
+    }
+
+    footer p a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    footer p a:hover {
+      text-decoration: underline;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .hero {
+      padding: var(--space-5);
+      box-shadow: var(--shadow-md);
+    }
+
+    .hero-eyebrow {
+      display: inline-block;
+      margin-bottom: var(--space-2);
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1e40af;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      font-size: 34px;
+      line-height: 1.15;
+      margin-bottom: var(--space-3);
+    }
+
+    .hero-value {
+      max-width: 760px;
+      font-size: 17px;
+    }
+
+    .hero-pricing {
+      margin-top: var(--space-3);
+      margin-bottom: var(--space-2);
+      font-size: 18px;
+    }
+
+    .cta-row {
+      margin-top: var(--space-3);
+    }
+
+    .subscribe-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #cbd5e1;
+      background: #e2e8f0;
+      color: #94a3b8;
+      cursor: not-allowed;
+      opacity: 0.7;
+      box-shadow: none;
+    }
+
+    .subscribe-btn:disabled {
+      pointer-events: none;
+    }
+
+    .cta-note {
+      margin-top: var(--space-2);
+      margin-bottom: 0;
+      font-size: 14px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-3);
+      margin-top: var(--space-2);
+      align-items: stretch;
+    }
+
+    @media (max-width: 1100px) {
+      .features-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .feature-item {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: linear-gradient(180deg, #fbfdff 0%, var(--surface-soft) 100%);
+      padding: calc(var(--space-3) + 2px);
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .feature-item h3 {
+      margin-bottom: 6px;
+      font-size: 16px;
+    }
+
+    .feature-item p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    /* Single-column tool stack: Goal → Add task → All Tasks → Today */
+    .mvp-stack {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      min-width: 0;
+    }
+
+    .mvp-card {
+      border-top: 3px solid #dbeafe;
+    }
+
+    .mvp-card h2 {
+      margin-bottom: 6px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+      margin-top: var(--space-2);
+    }
+
+    .actions--stack {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .actions--stack button {
+      width: 100%;
+      text-align: center;
+    }
+
+    @media (min-width: 720px) {
+      .actions--stack {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: stretch;
+      }
+
+      .actions--stack button {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+
+    .actions--manual {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--space-2);
+      align-items: stretch;
+    }
+
+    @media (max-width: 420px) {
+      .actions--manual {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text);
+      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+    }
+
+    button:hover {
+      background: var(--surface-soft);
+      border-color: #c6d2e3;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button.primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    button.primary:hover {
+      background: var(--primary-strong);
+      border-color: var(--primary-strong);
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: var(--mvp-table-cols);
+      gap: var(--space-1);
+      align-items: center;
+      justify-items: start;
+      padding: var(--space-2) 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .task-done {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .task-table-head {
+      display: grid;
+      grid-template-columns: var(--mvp-table-cols);
+      gap: var(--space-1);
+      align-items: end;
+      justify-items: start;
+      padding: 6px 0 6px;
+      border-bottom: 1px solid var(--line);
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .task-table-head span {
+      display: block;
+      width: 100%;
+      line-height: 1.1;
+    }
+
+    .task-title {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .task-title input[type="checkbox"] {
+      margin-top: 3px;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .task-text {
+      overflow-wrap: anywhere;
+    }
+
+    .tasks-scroller {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      padding: var(--space-2) var(--space-2) var(--space-1);
+    }
+
+    .task-score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 5px 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .task-row button {
+      min-height: 40px;
+      width: 100%;
+      max-width: 110px;
+      justify-self: stretch;
+    }
+
+    .today-row {
+      grid-template-columns: 1fr auto;
+    }
+
+    .today-empty,
+    .tasks-empty {
+      color: var(--muted);
+      padding: 12px 0;
+      font-size: 14px;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    select {
+      width: auto;
+      min-width: 4.5rem;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .today-capacity {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-2);
+      margin-bottom: var(--space-2);
+    }
+
+    .today-capacity__label {
+      font-weight: 600;
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      font-size: 14px;
+      margin-bottom: var(--space-2);
+    }
+
+    .badge {
+      background: #e8f0ff;
+      border: 1px solid #bfd2ff;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 600;
+    }
+
+    #message {
+      margin-top: var(--space-2);
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    .ok {
+      color: var(--ok);
+    }
+
+    .warn {
+      color: var(--warn);
+    }
+
+    @media (max-width: 760px) {
+      .container {
+        padding: 16px 14px 24px;
+      }
+
+      .card {
+        padding: var(--space-3);
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      .hero {
+        padding: var(--space-3);
+      }
+
+      .hero-title {
+        font-size: 28px;
+      }
+
+      .hero-value {
+        font-size: 16px;
+      }
+
+      .task-table-head {
+        display: none;
+      }
+
+      .task-row {
+        min-width: 0;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+          "title title"
+          "urgency importance"
+          "score today"
+          "del del";
+        align-items: start;
+      }
+
+      .task-row > .task-title {
+        grid-area: title;
+      }
+
+      .task-row > :nth-child(2) {
+        grid-area: urgency;
+        width: 100%;
+        max-width: 160px;
+        justify-self: start;
+      }
+
+      .task-row > :nth-child(3) {
+        grid-area: importance;
+        width: 100%;
+        max-width: 160px;
+        justify-self: end;
+      }
+
+      .task-row > .task-score {
+        grid-area: score;
+        justify-self: start;
+        align-self: center;
+      }
+
+      .task-row > button.today-toggle {
+        grid-area: today;
+        width: 100%;
+        max-width: 200px;
+        justify-self: end;
+        align-self: center;
+      }
+
+      .task-row > button:not(.today-toggle) {
+        grid-area: del;
+        width: 100%;
+        justify-self: stretch;
+        align-self: center;
+      }
+
+      .today-row {
+        grid-template-columns: 1fr;
+      }
+
+      @media (max-width: 719px) {
+        button {
+          width: 100%;
+        }
+
+        .subscribe-btn {
+          width: 100%;
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="card">
+      <h1>TaskPilot</h1>
+      <nav class="legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="card hero" aria-label="Hero">
+        <span class="hero-eyebrow">TaskPilot</span>
+        <h2 class="hero-title">Plan better. Execute faster. Ship with confidence.</h2>
+        <p class="hero-value">TaskPilot is a guided task planning assistant that helps individuals and small teams break goals into executable steps and generate daily plans.</p>
+        <p class="muted">This public MVP runs entirely in your browser: tasks are generated with a local rule-based planner and stored in <code>localStorage</code>. It does not call external large language model APIs.</p>
+        <p class="hero-pricing"><strong>US$12/month</strong> <span class="muted">(cancel anytime)</span></p>
+        <div class="cta-row">
+          <button class="subscribe-btn" type="button" disabled>Subscribe Now</button>
+          <p class="muted cta-note">Payment integration pending Creem approval. Button will be enabled after verification.</p>
+        </div>
+      </section>
+
+      <section class="card" aria-label="Features">
+        <h2>Core Features</h2>
+        <div class="features-grid">
+          <article class="feature-item">
+            <h3>Rule-Based Task Breakdown</h3>
+            <p>Convert a high-level goal into actionable steps using an on-device planner (no external model calls in this MVP).</p>
+          </article>
+          <article class="feature-item">
+            <h3>Smart Priority Sorting</h3>
+            <p>Rank tasks by urgency and importance for clearer execution.</p>
+          </article>
+          <article class="feature-item">
+            <h3>Daily Plan Generator</h3>
+            <p>Generate a focused today list from your highest-value tasks.</p>
+          </article>
+        </div>
+      </section>
+
+      <section aria-label="MVP Tools" class="mvp-stack">
+        <section class="card mvp-card">
+          <h2>Goal to Tasks</h2>
+          <p class="muted">Enter one goal and generate 6-10 executable tasks with a rule-based planner.</p>
+          <input id="goalInput" type="text" placeholder="Example: Launch a product website this month" />
+          <div class="actions actions--stack">
+            <button id="breakdownBtn" class="primary" type="button">Break Down Goal</button>
+            <button id="sortBtn" type="button">Auto Sort by Priority</button>
+            <button id="todayBtn" type="button">Generate Today Plan</button>
+          </div>
+          <div id="message" aria-live="polite"></div>
+        </section>
+
+        <section class="card mvp-card">
+          <h2>Add Manual Task</h2>
+          <div class="actions actions--manual">
+            <input id="manualTaskInput" type="text" placeholder="Add a custom task" />
+            <button id="addTaskBtn" type="button">Add Task</button>
+          </div>
+        </section>
+
+        <section class="card mvp-card">
+          <h2>All Tasks</h2>
+          <div class="stats">
+            <span class="badge" id="totalStat">Total: 0</span>
+            <span class="badge" id="doneStat">Completed: 0</span>
+            <span class="badge" id="rateStat">Completion: 0%</span>
+          </div>
+          <div class="tasks-scroller">
+            <div class="task-table-head" aria-hidden="true">
+              <span>Task</span>
+              <span>Urgency</span>
+              <span>Importance</span>
+              <span>Score</span>
+              <span>Today</span>
+              <span>Action</span>
+            </div>
+            <div id="tasksList"></div>
+          </div>
+        </section>
+
+        <section class="card mvp-card">
+          <h2>Today Plan</h2>
+          <div class="today-capacity">
+            <label class="today-capacity__label muted" for="dailyLimitSelect">Daily capacity</label>
+            <select id="dailyLimitSelect" aria-label="Daily capacity">
+              <option>1</option>
+              <option>2</option>
+              <option>3</option>
+              <option>4</option>
+              <option>5</option>
+              <option>6</option>
+              <option>7</option>
+              <option>8</option>
+              <option>9</option>
+              <option>10</option>
+            </select>
+            <span class="badge" id="todayPickStat">Selected: 0/5</span>
+          </div>
+          <p class="muted">Pick today’s focus manually (per-task “Today” button), or use <strong>Generate Today Plan</strong> to auto-fill up to your daily capacity by priority score.</p>
+          <div id="todayList"></div>
+        </section>
+      </section>
+    </main>
+
+    <footer class="card">
+      <p class="muted">TaskPilot MVP for product verification and early access onboarding.</p>
+      <p class="muted">Contact: <a href="mailto:3916687489@qq.com">3916687489@qq.com</a></p>
+      <nav class="legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+      </nav>
+    </footer>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "taskpilot_mvp_data_v1";
+    const state = {
+      goal: "",
+      tasks: [],
+      todayIds: [],
+      dailyLimit: 5
+    };
+
+    const goalInput = document.getElementById("goalInput");
+    const manualTaskInput = document.getElementById("manualTaskInput");
+    const breakdownBtn = document.getElementById("breakdownBtn");
+    const sortBtn = document.getElementById("sortBtn");
+    const todayBtn = document.getElementById("todayBtn");
+    const addTaskBtn = document.getElementById("addTaskBtn");
+    const tasksList = document.getElementById("tasksList");
+    const todayList = document.getElementById("todayList");
+    const message = document.getElementById("message");
+    const totalStat = document.getElementById("totalStat");
+    const doneStat = document.getElementById("doneStat");
+    const rateStat = document.getElementById("rateStat");
+    const dailyLimitSelect = document.getElementById("dailyLimitSelect");
+    const todayPickStat = document.getElementById("todayPickStat");
+
+    function uid() {
+      return String(Date.now()) + Math.random().toString(16).slice(2);
+    }
+
+    function score(task) {
+      return 0.6 * task.importance + 0.4 * task.urgency;
+    }
+
+    function clampOneToFive(num) {
+      const n = Number(num);
+      if (Number.isNaN(n)) return 3;
+      return Math.min(5, Math.max(1, n));
+    }
+
+    function clampDailyLimit(num) {
+      const n = Number(num);
+      if (Number.isNaN(n)) return 5;
+      return Math.min(10, Math.max(1, n));
+    }
+
+    function isInToday(id) {
+      return state.todayIds.indexOf(id) !== -1;
+    }
+
+    function getActivePickedTodayCount() {
+      return state.todayIds.filter((id) => {
+        const task = state.tasks.find((t) => t.id === id);
+        return task && !task.done;
+      }).length;
+    }
+
+    function cleanupTodayIds() {
+      state.todayIds = state.todayIds.filter((id) => {
+        const task = state.tasks.find((t) => t.id === id);
+        if (!task) return false;
+        if (task.done) return false;
+        return true;
+      });
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        state.goal = parsed.goal || "";
+        state.tasks = Array.isArray(parsed.tasks) ? parsed.tasks : [];
+        state.todayIds = Array.isArray(parsed.todayIds) ? parsed.todayIds : [];
+        state.dailyLimit = clampDailyLimit(
+          typeof parsed.dailyLimit === "number" ? parsed.dailyLimit : 5
+        );
+        cleanupTodayIds();
+      } catch (e) {
+        // Ignore invalid local data and keep defaults.
+      }
+    }
+
+    function setMessage(text, kind) {
+      message.textContent = text;
+      message.className = kind === "warn" ? "warn" : "ok";
+    }
+
+    function syncDailyLimitSelect() {
+      if (!dailyLimitSelect) return;
+      dailyLimitSelect.value = String(state.dailyLimit);
+    }
+
+    function updateTodayPickStat() {
+      if (!todayPickStat) return;
+      const picked = getActivePickedTodayCount();
+      todayPickStat.textContent = "Selected: " + picked + "/" + state.dailyLimit;
+    }
+
+    function toggleTaskInToday(taskId) {
+      cleanupTodayIds();
+      const idx = state.todayIds.indexOf(taskId);
+      if (idx !== -1) {
+        state.todayIds.splice(idx, 1);
+        saveState();
+        renderAll();
+        setMessage("Removed from Today Plan.", "ok");
+        return;
+      }
+
+      const picked = getActivePickedTodayCount();
+      if (picked >= state.dailyLimit) {
+        setMessage("Today Plan is full. Remove a task or increase daily capacity.", "warn");
+        return;
+      }
+
+      state.todayIds.push(taskId);
+      saveState();
+      renderAll();
+      setMessage("Added to Today Plan.", "ok");
+    }
+
+    function generateRuleBasedTasks(goal) {
+      const templates = [
+        "Research requirements and user needs for: {goal}",
+        "Create a practical execution plan for: {goal}",
+        "Set milestones and timeline for: {goal}",
+        "Execute core tasks for: {goal}",
+        "Review quality and test outcomes for: {goal}",
+        "Publish or deliver the first version of: {goal}",
+        "Collect feedback and iterate on: {goal}",
+        "Document process and next actions for: {goal}"
+      ];
+      return templates.map((tpl, index) => ({
+        id: uid(),
+        text: tpl.replace("{goal}", goal),
+        urgency: ((index + 2) % 5) + 1,
+        importance: ((index + 3) % 5) + 1,
+        done: false
+      }));
+    }
+
+    function renderStats() {
+      const total = state.tasks.length;
+      const done = state.tasks.filter((t) => t.done).length;
+      const rate = total ? Math.round((done / total) * 100) : 0;
+      totalStat.textContent = "Total: " + total;
+      doneStat.textContent = "Completed: " + done;
+      rateStat.textContent = "Completion: " + rate + "%";
+    }
+
+    function renderTasks() {
+      tasksList.innerHTML = "";
+      if (!state.tasks.length) {
+        const empty = document.createElement("p");
+        empty.className = "tasks-empty";
+        empty.textContent = "No tasks yet. Add one or break down a goal.";
+        tasksList.appendChild(empty);
+        return;
+      }
+
+      state.tasks.forEach((task) => {
+        const row = document.createElement("div");
+        row.className = "row task-row";
+
+        const title = document.createElement("label");
+        title.className = "task-title";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = task.done;
+        checkbox.addEventListener("change", () => {
+          task.done = checkbox.checked;
+          if (task.done) {
+            state.todayIds = state.todayIds.filter((id) => id !== task.id);
+          }
+          saveState();
+          renderAll();
+        });
+        const text = document.createElement("span");
+        text.className = "task-text";
+        text.textContent = " " + task.text;
+        if (task.done) text.className = "task-text task-done";
+        title.appendChild(checkbox);
+        title.appendChild(text);
+
+        const urgency = document.createElement("input");
+        urgency.type = "number";
+        urgency.min = "1";
+        urgency.max = "5";
+        urgency.value = task.urgency;
+        urgency.addEventListener("change", () => {
+          task.urgency = clampOneToFive(urgency.value);
+          urgency.value = task.urgency;
+          saveState();
+          renderAll();
+        });
+
+        const importance = document.createElement("input");
+        importance.type = "number";
+        importance.min = "1";
+        importance.max = "5";
+        importance.value = task.importance;
+        importance.addEventListener("change", () => {
+          task.importance = clampOneToFive(importance.value);
+          importance.value = task.importance;
+          saveState();
+          renderAll();
+        });
+
+        const scoreEl = document.createElement("span");
+        scoreEl.className = "task-score";
+        scoreEl.textContent = "Score: " + score(task).toFixed(1);
+
+        const todayBtnEl = document.createElement("button");
+        todayBtnEl.type = "button";
+        todayBtnEl.className = "today-toggle";
+        const inToday = isInToday(task.id);
+        const picked = getActivePickedTodayCount();
+        if (inToday) {
+          todayBtnEl.textContent = "In Today";
+        } else {
+          todayBtnEl.textContent = "Add Today";
+        }
+        const disableAdd = !task.done && !inToday && picked >= state.dailyLimit;
+        if (task.done) {
+          todayBtnEl.disabled = true;
+        } else if (disableAdd) {
+          todayBtnEl.disabled = true;
+        } else {
+          todayBtnEl.disabled = false;
+        }
+        todayBtnEl.addEventListener("click", () => {
+          toggleTaskInToday(task.id);
+        });
+
+        const del = document.createElement("button");
+        del.textContent = "Delete";
+        del.addEventListener("click", () => {
+          state.tasks = state.tasks.filter((t) => t.id !== task.id);
+          state.todayIds = state.todayIds.filter((id) => id !== task.id);
+          saveState();
+          renderAll();
+        });
+
+        row.appendChild(title);
+        row.appendChild(urgency);
+        row.appendChild(importance);
+        row.appendChild(scoreEl);
+        row.appendChild(todayBtnEl);
+        row.appendChild(del);
+        tasksList.appendChild(row);
+      });
+    }
+
+    function renderToday() {
+      todayList.innerHTML = "";
+      const todayTasks = state.todayIds
+        .map((id) => state.tasks.find((t) => t.id === id))
+        .filter(Boolean);
+
+      if (!todayTasks.length) {
+        const empty = document.createElement("p");
+        empty.className = "today-empty";
+        empty.textContent = "No today plan yet. Use per-task 'Add Today' or click 'Generate Today Plan'.";
+        todayList.appendChild(empty);
+        return;
+      }
+
+      todayTasks.forEach((task) => {
+        const row = document.createElement("div");
+        row.className = "row today-row";
+
+        const label = document.createElement("label");
+        label.className = "task-title";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = task.done;
+        checkbox.addEventListener("change", () => {
+          task.done = checkbox.checked;
+          if (task.done) {
+            state.todayIds = state.todayIds.filter((id) => id !== task.id);
+          }
+          saveState();
+          renderAll();
+        });
+        const text = document.createElement("span");
+        text.className = "task-text";
+        text.textContent = " " + task.text;
+        if (task.done) text.className = "task-text task-done";
+        label.appendChild(checkbox);
+        label.appendChild(text);
+
+        const badge = document.createElement("span");
+        badge.className = "task-score";
+        badge.textContent = "Score: " + score(task).toFixed(1);
+
+        row.appendChild(label);
+        row.appendChild(badge);
+        todayList.appendChild(row);
+      });
+    }
+
+    function renderAll() {
+      cleanupTodayIds();
+      goalInput.value = state.goal;
+      syncDailyLimitSelect();
+      updateTodayPickStat();
+      renderStats();
+      renderTasks();
+      renderToday();
+    }
+
+    breakdownBtn.addEventListener("click", () => {
+      const goal = goalInput.value.trim();
+      if (!goal) {
+        setMessage("Please enter a goal before breaking down tasks.", "warn");
+        return;
+      }
+
+      state.goal = goal;
+      state.tasks = generateRuleBasedTasks(goal);
+      state.todayIds = [];
+      saveState();
+      renderAll();
+      setMessage("Generated " + state.tasks.length + " tasks from your goal.", "ok");
+    });
+
+    addTaskBtn.addEventListener("click", () => {
+      const text = manualTaskInput.value.trim();
+      if (!text) {
+        setMessage("Please enter a task name to add.", "warn");
+        return;
+      }
+      state.tasks.push({
+        id: uid(),
+        text,
+        urgency: 3,
+        importance: 3,
+        done: false
+      });
+      manualTaskInput.value = "";
+      saveState();
+      renderAll();
+      setMessage("Manual task added.", "ok");
+    });
+
+    sortBtn.addEventListener("click", () => {
+      state.tasks.sort((a, b) => score(b) - score(a));
+      saveState();
+      renderAll();
+      setMessage("Tasks sorted by priority score (high to low).", "ok");
+    });
+
+    todayBtn.addEventListener("click", () => {
+      const activeTasks = state.tasks.filter((t) => !t.done);
+      if (!activeTasks.length) {
+        setMessage("No active tasks available for today plan.", "warn");
+        return;
+      }
+      const sorted = [...activeTasks].sort((a, b) => score(b) - score(a));
+      const count =
+        sorted.length >= state.dailyLimit ? state.dailyLimit : sorted.length;
+      state.todayIds = sorted.slice(0, count).map((t) => t.id);
+      saveState();
+      renderAll();
+      setMessage("Auto-filled Today Plan (up to " + state.dailyLimit + " tasks) by priority score.", "ok");
+    });
+
+    dailyLimitSelect.addEventListener("change", () => {
+      const next = clampDailyLimit(Number(dailyLimitSelect.value));
+      const picked = getActivePickedTodayCount();
+      if (picked > next) {
+        dailyLimitSelect.value = String(state.dailyLimit);
+        setMessage(
+          "Cannot lower daily capacity while Today Plan has more active tasks. Remove items from Today first.",
+          "warn"
+        );
+        return;
+      }
+      state.dailyLimit = next;
+      saveState();
+      renderAll();
+      setMessage("Daily capacity set to " + state.dailyLimit + ".", "ok");
+    });
+
+    loadState();
+    renderAll();
+  </script>
+</body>
+</html>
